@@ -3,6 +3,7 @@ dotenv.config();
 import express, { Request, Response } from "express";
 import { connectMongoDB, connectPostgreSQL } from "./config/database";
 import authRoute from "../src/routes/authRoute";
+import applicationsRoute from "./routes/applicationsRoute";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -17,6 +18,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use("/api/auth", authRoute);
+app.use("/api/applications", applicationsRoute);
 
 // Error Handling Middleware
 app.use(errorHandler);
