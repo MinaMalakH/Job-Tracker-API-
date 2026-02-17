@@ -5,6 +5,7 @@ import { connectMongoDB, connectPostgreSQL } from "./config/database";
 import authRoute from "../src/routes/authRoute";
 import applicationsRoute from "./routes/applicationsRoute";
 import { errorHandler } from "./middleware/errorHandler";
+import resumeRoutes from "./routes/resumesRoute";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +20,7 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/api/auth", authRoute);
 app.use("/api/applications", applicationsRoute);
+app.use("/api/resumes", resumeRoutes);
 
 // Error Handling Middleware
 app.use(errorHandler);
