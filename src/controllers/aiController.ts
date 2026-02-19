@@ -100,3 +100,55 @@ export const testAiConnection = async (
     next(error);
   }
 };
+
+export const generateCoverLetter = async (
+  req: authenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.user) throw new Error("User not authenticated");
+
+    const { position, company, resumeSummary, jobDescription } = req.body;
+
+    const coverLetter = await AiService.generateCoverLetter(
+      position,
+      company,
+      resumeSummary,
+      jobDescription,
+    );
+    res.status(200).json({
+      success: true,
+      data: { coverLetter },
+      message: "Cover letter generated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const generateInterviewPrep = async (
+  req: authenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.user) throw new Error("User not authenticated");
+
+    const { position, company, resumeSummary } = req.body;
+
+    const prep = await AiService.generateInterviewPrep(
+      position,
+      company,
+      resumeSummary,
+    );
+
+    res.status(200).json({
+      success: true,
+      data: prep,
+      message: "Interview preparation generated",
+    });
+  } catch (error) {
+    next(error);
+  }
+};

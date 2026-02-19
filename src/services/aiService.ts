@@ -145,4 +145,170 @@ If resume is very short or job desc is unclear, still provide best-effort analys
       );
     }
   }
+
+  /**
+   * Generate a professional cover letter
+   */
+  static async generateCoverLetter(
+    position: string,
+    company: string,
+    resumeSummary: string,
+    jobDescription: string,
+  ): Promise<string> {
+    if (!position || !company || !resumeSummary || !jobDescription) {
+      throw new BadRequestError(
+        "Position, company, resume summary, and job description are required ",
+      );
+    }
+
+    const prompt = `
+Write a professional, concise cover letter (300–400 words max) tailored for:
+
+Position: ${position}
+Company: ${company}
+
+Candidate background (from resume):
+"""
+${resumeSummary}
+"""
+
+Job requirements:
+"""
+${jobDescription}
+"""
+
+Guidelines:
+- Professional tone, enthusiastic but not over-the-top
+- Highlight 2–3 relevant experiences/skills from resume that match the job
+- Show genuine interest in the company/role
+- End with a strong call-to-action
+- Use first-person language
+- Keep under 400 words
+
+Return ONLY the cover letter text — no JSON, no extra explanations.
+`;
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a professional career coach specializing in cover letters.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.6,
+        max_tokens: 800,
+      });
+
+      const coverLetter = completion.choices[0]?.message?.content?.trim();
+
+      if (!coverLetter) {
+        throw new Error("No cover letter generated");
+      }
+
+      return coverLetter;
+    } catch (error: any) {
+      console.error("Cover letter generation error:", error);
+      throw new BadRequestError(
+        `Failed to generate cover letter: ${error.message || "Unknown error"}`,
+      );
+    }
+  }
+
+  /**
+   * Generate interview questions + answer tips
+   */
+
+  static async generateInterviewPrep(
+    position: string,
+    company: string,
+    resumeSummary?: string,
+  ): Promise<{
+    technicalQuestions: Array<{ question: string; tips: string }>;
+    behavioralQuestions: Array<{ question: string; tips: string }>;
+    companySpecificQuestions: Array<{ question: string; tips: string }>;
+    scenarioQuestions: Array<{ question: string; tips: string }>;
+  }> {
+    if (!position || !company) {
+      throw new BadRequestError("Position and company are required");
+    }
+
+    const resumeContext = resumeSummary
+      ? `Candidate background from resume:\n"""\n${resumeSummary}\n"""\n`
+      : "";
+
+    const prompt = `
+Generate 10 realistic interview questions for a ${position} role at ${company}.
+
+Include exactly:
+- 3 technical questions
+- 3 behavioral questions
+- 2 company-specific questions (research-based, realistic for ${company})
+- 2 scenario-based / problem-solving questions
+
+${resumeContext}
+
+For each question provide:
+- The question text
+- 2–3 sentence brief answer tips / key points to cover
+
+Return ONLY valid JSON with this exact structure:
+
+{
+  "technicalQuestions": [
+    { "question": "...", "tips": "..." },
+    ...
+  ],
+  "behavioralQuestions": [...],
+  "companySpecificQuestions": [...],
+  "scenarioQuestions": [...]
+}
+
+No extra text outside the JSON.
+`;
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an expert interview coach. Respond only with valid JSON.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+        response_format: { type: "json_object" },
+      });
+      const responseText = completion.choices[0]?.message?.content;
+
+      if (!responseText) {
+        throw new Error("No Interview prep response");
+      }
+
+      let prepData;
+      try {
+        prepData = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Invalid JSON from interview prep:", responseText);
+        throw new BadRequestError("Ai returned invalid JSON format");
+      }
+
+      // Basic validation
+      if (!prepData.technicalQuestions?.length) {
+        throw new BadRequestError("Incomplete interview prep response");
+      }
+
+      return prepData;
+    } catch (error: any) {
+      console.error("Interview prep error:", error);
+      throw new BadRequestError(
+        `Failed to generate interview prep: ${error.message || "Unknown error"} `,
+      );
+    }
+  }
 }
