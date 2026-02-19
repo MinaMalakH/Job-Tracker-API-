@@ -48,7 +48,6 @@ export class ResumeService {
           allowed_formats: ["pdf", "doc", "docx"],
           type: "upload",
           access_mode: "public",
-          // Remove flags to allow preview
         },
         (error, result) => {
           if (error) return reject(error);
@@ -59,18 +58,29 @@ export class ResumeService {
       Readable.from(file.buffer).pipe(uploadStream);
     });
 
-    // Generate URLs: one for viewing in browser, one for downloading
-    const fileUrl = uploadResult.secure_url; // Opens in browser
+    // ---------------------------------------------------------------
+    // Preview URL  → opens the file inline in the browser tab
+    // No Cloudinary flags needed; the browser decides based on MIME type
+    // ---------------------------------------------------------------
+    const fileUrl = uploadResult.secure_url;
+
+    // ---------------------------------------------------------------
+    // Download URL → forces the browser to download the file.
+    // fl_attachment:<filename> tells Cloudinary to set the header:
+    //   Content-Disposition: attachment; filename="<filename>"
+    // The filename is URI-encoded so spaces / special chars are safe.
+    // ---------------------------------------------------------------
+    const encodedFileName = encodeURIComponent(file.originalname);
     const fileDownloadUrl = uploadResult.secure_url.replace(
       "/upload/",
-      "/upload/fl_attachment/",
-    ); // Forces download
+      `/upload/fl_attachment:${encodedFileName}/`,
+    );
 
     const resume = await Resume.create({
       userId,
       fileName: file.originalname,
-      fileUrl, // URL for viewing in browser
-      fileDownloadUrl, // URL for downloading the file
+      fileUrl, // ← use this when you want to open/preview the file
+      fileDownloadUrl, // ← use this when you want to trigger a download
       publicId: uploadResult.public_id,
       extractedText,
       version: version || "v1",
