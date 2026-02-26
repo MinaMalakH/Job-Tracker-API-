@@ -24,7 +24,9 @@ export const connectMongoDB = async (): Promise<void> => {
 
 export const pgPool = new Pool({
   connectionString: process.env.POSTGRES_URI,
-  // Optional: max: 20, idleTimeoutMillis: 30000, connectionTimeoutMillis: 2000
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
 
 export const connectPostgreSQL = async (): Promise<void> => {

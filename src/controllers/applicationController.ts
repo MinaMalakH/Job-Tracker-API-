@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { ApplicationService } from "../services/applicationService";
 import { authenticatedRequest } from "../middleware/auth";
 import { BadRequestError } from "../middleware/errorHandler";
+import { AnalyticService } from "../services/analyticsService";
 
 export const createApplication = async (
   req: authenticatedRequest,
@@ -154,6 +155,28 @@ export const updateStatus = async (
       success: true,
       data: updated,
       message: `Status updated to ${status}`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getStats = async (
+  req: authenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.user) throw new Error("User not authenticated");
+    // Optional: trigger update before fetch (for fresh data)
+    await AnalyticService.updateMonthlyStats(req.user.userId);
+
+    const stats = await AnalyticService.getUserStats(req.user.userId);
+
+    res.status(200).json({
+      success: true,
+      data: stats,
+      message: "Application statistics retrieved",
     });
   } catch (error) {
     next(error);

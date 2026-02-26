@@ -6,6 +6,7 @@ import {
   updateApplication,
   deleteApplication,
   updateStatus,
+  getStats,
 } from "../controllers/applicationController";
 
 import { authenticate } from "../middleware/auth";
@@ -18,11 +19,12 @@ router.use(authenticate);
 router.post("/", createApplication);
 router.get("/", getAllApplications);
 
+// Special routes must come before /:id to avoid conflicts
+router.get("/stats", getStats);
+router.patch("/:id/status", updateStatus);
+
 router.get("/:id", getApplication);
 router.put("/:id", updateApplication);
 router.delete("/:id", deleteApplication);
-
-// Special route for quick status change
-router.patch("/:id/status", updateStatus);
 
 export default router;
