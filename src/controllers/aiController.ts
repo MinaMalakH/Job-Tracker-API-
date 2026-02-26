@@ -4,6 +4,7 @@ import { authenticatedRequest } from "../middleware/auth";
 import { ResumeService } from "../services/resumeService";
 import { BadRequestError } from "../middleware/errorHandler";
 import { Application } from "../models/Application";
+import { aiQueue } from "../queues/aiQueue";
 
 interface AnalyzeRequest extends authenticatedRequest {
   body: {
@@ -47,34 +48,26 @@ export const analyzeResume = async (
     if (!jobDescription.trim()) {
       throw new BadRequestError("Job description is required");
     }
-    const analysis = await AiService.analyzeResume(
-      textToAnalyze,
-      jobDescription,
-    );
 
-    // Optional: Save to application if applicationId provided
-    if (applicationId) {
-      await Application.findOneAndUpdate(
-        { _id: applicationId, userId: req.user.userId },
-        {
-          $set: {
-            aiSuggestions: {
-              keywords: analysis.keywords,
-              missingKeywords: analysis.missingKeywords,
-              skillsToEmphasize: analysis.skillsToEmphasize,
-              experienceToHighlight: analysis.experienceToHighlight,
-              recommendedChanges: analysis.recommendedChanges,
-              matchScore: analysis.matchScore,
-              generatedAt: new Date(),
-            },
-          },
-        },
-      );
-    }
+    // Add to queue instead of running directly
+    const job = await aiQueue.add("analyze-resume", {
+      resumeId,
+      resumeText: textToAnalyze,
+      jobDescription,
+      applicationId,
+      userId: req.user.userId,
+    });
+
     res.status(200).json({
       success: true,
-      data: analysis,
-      message: "Resume analysis complete",
+      data: {
+        jobId: job.id,
+        status: "queued",
+        message:
+          "Analysis job queued. Use /api/ai/job/" +
+          job.id +
+          " to check status later.",
+      },
     });
   } catch (error) {
     next(error);
@@ -109,18 +102,35 @@ export const generateCoverLetter = async (
   try {
     if (!req.user) throw new Error("User not authenticated");
 
-    const { position, company, resumeSummary, jobDescription } = req.body;
+    const { position, company, resumeSummary, jobDescription, applicationId } =
+      req.body;
 
-    const coverLetter = await AiService.generateCoverLetter(
+    if (!position || !company || !resumeSummary || !jobDescription) {
+      throw new BadRequestError(
+        "Position, company, resume summary, and job description are required",
+      );
+    }
+
+    // Add job to queue
+    const job = await aiQueue.add("generate-cover-letter", {
       position,
       company,
       resumeSummary,
       jobDescription,
-    );
-    res.status(200).json({
+      applicationId,
+      userId: req.user.userId,
+    });
+
+    res.status(202).json({
       success: true,
-      data: { coverLetter },
-      message: "Cover letter generated successfully",
+      data: {
+        jobId: job.id,
+        status: "queued",
+        message:
+          "Cover letter generation queued. Use /api/ai/job/" +
+          job.id +
+          " to check status later.",
+      },
     });
   } catch (error) {
     next(error);

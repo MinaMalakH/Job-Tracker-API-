@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+
 import express, { Request, Response } from "express";
 import { connectMongoDB, connectPostgreSQL } from "./config/database";
 import authRoute from "../src/routes/authRoute";
@@ -7,6 +8,12 @@ import applicationsRoute from "./routes/applicationsRoute";
 import { errorHandler } from "./middleware/errorHandler";
 import resumeRoutes from "./routes/resumesRoute";
 import aiRoutes from "./routes/aiRoute";
+import notificationRoutes from "./routes/notificationsRoute";
+import "./queues/aiProcessor";
+
+// Start cron job in index.ts
+import runDailyFollowUps from "./jobs/followUpCron";
+runDailyFollowUps(); // schedules the job
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +30,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/applications", applicationsRoute);
 app.use("/api/resumes", resumeRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Error Handling Middleware
 app.use(errorHandler);
