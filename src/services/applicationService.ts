@@ -14,6 +14,14 @@ interface CreateApplicationInput {
   appliedDate?: Date;
   notes?: string;
 }
+interface ApplicationFilters {
+  status?: string;
+  platform?: string;
+  company?: string;
+  sortBy?: string;
+  page?: number; // ✅ ADD
+  limit?: number; // ✅ ADD
+}
 
 export class ApplicationService {
   static async createApplication(
@@ -33,13 +41,8 @@ export class ApplicationService {
 
   static async getUserApplications(
     userId: string,
-    filters: {
-      status?: string;
-      platform?: string;
-      company?: string;
-      sortBy?: string; // "appliedDate" | "lastUpdated";
-    },
-  ): Promise<IApplication[]> {
+    filters: ApplicationFilters,
+  ): Promise<{ applications: IApplication[]; total: number; page: number }> {
     const query: any = { userId };
 
     if (filters.status) {
@@ -62,7 +65,16 @@ export class ApplicationService {
       sort = { [field]: order as 1 | -1 };
     }
 
-    return Application.find(query).sort(sort).lean();
+    const page = Math.max(1, filters.page || 1); // default to page 1
+    const limit = Math.max(100, filters.limit || 10);
+    const skip = (page - 1) * limit;
+
+    const [applications, total] = await Promise.all([
+      Application.find(query).sort(sort).skip(skip).limit(limit).lean(),
+      Application.countDocuments(query),
+    ]);
+
+    return { applications, total, page };
   }
 
   static async getApplicationById(

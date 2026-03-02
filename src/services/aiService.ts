@@ -1,6 +1,12 @@
 import openai from "../config/openai";
 import { BadRequestError } from "../middleware/errorHandler";
 
+// Helper function - add at top of file
+function escapePromptText(text: string): string {
+  // Prevent triple quotes from breaking out of string
+  return text.replace(/"""/g, '`"`');
+}
+
 export class AiService {
   /**
    * Simple test method to verify OpenAI connection
@@ -69,6 +75,8 @@ export class AiService {
       throw new BadRequestError("Resume text and job description are required");
     }
 
+    const escapedResumeText = escapePromptText(resumeText);
+    const escapedJobDescription = escapePromptText(jobDescription);
     const prompt = `
 You are a professional resume consultant with 15+ years of experience in tech recruiting.
 
@@ -76,12 +84,12 @@ Analyze this resume against the job description below.
 
 RESUME TEXT:
 """
-${resumeText}
+${escapedResumeText}
 """
 
 JOB DESCRIPTION:
 """
-${jobDescription}
+${escapedJobDescription}
 """
 
 Provide a detailed analysis in **strict JSON format only** (no other text). The JSON must have exactly these keys:
@@ -161,20 +169,24 @@ If resume is very short or job desc is unclear, still provide best-effort analys
       );
     }
 
+    const escapedResumeSummary = escapePromptText(resumeSummary);
+    const escapedJobDescription = escapePromptText(jobDescription);
+    const escapedPosition = escapePromptText(position);
+    const escapedCompany = escapePromptText(company);
     const prompt = `
 Write a professional, concise cover letter (300–400 words max) tailored for:
 
-Position: ${position}
-Company: ${company}
+Position: ${escapedPosition}
+Company: ${escapedCompany}
 
 Candidate background (from resume):
 """
-${resumeSummary}
+${escapedResumeSummary}
 """
 
 Job requirements:
 """
-${jobDescription}
+${escapedJobDescription}
 """
 
 Guidelines:

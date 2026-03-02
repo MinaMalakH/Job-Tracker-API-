@@ -53,13 +53,19 @@ const resumeSchema = new Schema<IResume>({
   },
 });
 
-// Ensure only onw default per user
+// Ensure only one default resume per user
 resumeSchema.pre("save", async function () {
-  if (this.isDefault) {
-    await this.collection.updateMany(
-      { userId: this.userId, _id: { $ne: this._id } },
-      { $set: { isDefault: false } },
-    );
+  try {
+    if (this.isDefault && this.isModified("isDefault")) {
+      // Only run if isDefault was actually modified and set to true
+      await Resume.updateMany(
+        { userId: this.userId, _id: { $ne: this._id } },
+        { $set: { isDefault: false } },
+      );
+    }
+  } catch (error) {
+    console.error("Error ensuring single default resume:", error);
+    throw error; // Let the error propagate to be handled by the caller
   }
 });
 

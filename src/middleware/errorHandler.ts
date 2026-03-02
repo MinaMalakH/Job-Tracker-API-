@@ -18,15 +18,18 @@ export class BadRequestError extends AppError {
 }
 
 export const errorHandler = (
-  err: Error | AppError,
+  err: any,
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const statusCode = err instanceof AppError ? err.statusCode : 500;
+  const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
 
-  console.error(`[${statusCode}] ${message}`, err.stack);
+  console.error(
+    `[${statusCode}] ${req.method} ${req.originalUrl} - ${message}`,
+    err.stack,
+  );
 
   res.status(statusCode).json({
     success: false,
@@ -34,3 +37,8 @@ export const errorHandler = (
     ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 };
+export class UnauthorizedError extends AppError {
+  constructor(message: string = "Unauthorized") {
+    super(message, 401); // ✅ Status 401
+  }
+}
