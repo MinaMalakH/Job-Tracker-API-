@@ -176,5 +176,5 @@ details.
 
 ---
 
-_Feel free to connect on [LinkedIn](https://www.linkedin.com/) or open an issue
+_Feel free to connect on [LinkedIn](www.linkedin.com/in/minamalakh) or open an issue
 if you have questions!_
