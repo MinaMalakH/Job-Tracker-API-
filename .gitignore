@@ -1,8 +1,16 @@
+# dependencies
+default
 node_modules
+
 dist
+
+# environment
+env
 .env
-BUG_FIXES_MANUAL.md
-BUGS_QUICK_REFERENCE.md
-CODE_REVIEW_ANALYSIS.md
-DETAILED_CODE_FLOW.md
-EXECUTIVE_SUMMARY.md
+
+# ignore generated analysis docs (remove if you want them tracked)
+# BUG_FIXES_MANUAL.md
+# BUGS_QUICK_REFERENCE.md
+# CODE_REVIEW_ANALYSIS.md
+# DETAILED_CODE_FLOW.md
+# EXECUTIVE_SUMMARY.md
