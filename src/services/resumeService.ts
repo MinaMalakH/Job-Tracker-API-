@@ -5,6 +5,7 @@ import { BadRequestError } from "../middleware/errorHandler";
 import cloudinary from "../config/cloudinary"; // your config file
 import { Readable } from "stream";
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit
 export class ResumeService {
   static async uploadResume(
     userId: string,
@@ -15,7 +16,13 @@ export class ResumeService {
       throw new BadRequestError("No valid file uploaded");
     }
 
+    if (file.buffer.length > MAX_FILE_SIZE) {
+      throw new BadRequestError(
+        `File size exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`,
+      );
+    }
     let extractedText = "";
+    let extractionFailed = false;
     try {
       if (file.mimetype === "application/pdf") {
         const data = await PDFParse(file.buffer);
@@ -27,11 +34,19 @@ export class ResumeService {
       ) {
         const result = await mammoth.extractRawText({ buffer: file.buffer });
         extractedText = result.value || "";
+      } else {
+        throw new BadRequestError(
+          "Unsupported file type. Only PDF and Word documents are allowed.",
+        );
       }
     } catch (error: any) {
       console.error("Text extraction failed:", error);
+      extractionFailed = true;
     }
 
+    if (extractionFailed && !extractedText) {
+      console.warn("Warning: Could not extract text from resume file"); // ✅ Warn user    }
+    }
     const fileExtension =
       file.originalname.split(".").pop()?.toLowerCase() || "pdf";
     const fileName = file.originalname

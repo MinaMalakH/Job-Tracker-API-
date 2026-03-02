@@ -20,7 +20,7 @@ export class AnalyticService {
       screening_count: apps.filter((a) => a.status === "screening").length,
       interview_count: apps.filter((a) => a.status === "interview").length,
       offer_count: apps.filter((a) => a.status === "offer").length,
-      rejected_count: apps.filter((a) => a.status === "offer").length,
+      rejected_count: apps.filter((a) => a.status === "rejected").length,
       avg_response_days: 0,
     };
 

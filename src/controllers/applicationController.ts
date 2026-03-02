@@ -39,24 +39,31 @@ export const getAllApplications = async (
       throw new Error("User not authenticated ");
     }
 
-    const { status, platform, company, sortBy } = req.query;
+    const { status, platform, company, sortBy, page, limit } = req.query;
 
     const filters = {
       status: status as string | undefined,
       platform: platform as string | undefined,
       company: company as string | undefined,
       sortBy: sortBy as string | undefined,
+      page: page ? parseInt(page as string, 10) : undefined,
+      limit: limit ? parseInt(limit as string, 10) : undefined,
     };
 
-    const applications = await ApplicationService.getUserApplications(
+    const result = await ApplicationService.getUserApplications(
       req.user.userId,
       filters,
     );
 
     res.status(200).json({
       success: true,
-      data: applications,
-      count: applications.length,
+      data: result.applications,
+      pagination: {
+        total: result.total,
+        page: result.page,
+        limit: filters.limit || 20,
+        totalPages: Math.ceil(result.total / (filters.limit || 20)),
+      },
     });
   } catch (error) {
     next(error);

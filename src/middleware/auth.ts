@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken, TokenPayload } from "../utils/jwt";
-import { BadRequestError } from "./errorHandler";
+import { BadRequestError, UnauthorizedError } from "./errorHandler";
 
 export interface authenticatedRequest extends Request {
   user?: TokenPayload;
@@ -13,7 +13,7 @@ export const authenticate = (
 ) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer")) {
-    return next(new BadRequestError("No token Provided"));
+    return next(new UnauthorizedError("No token Provided")); // ✅ 401
   }
 
   const token = authHeader.split(" ")[1];
@@ -22,6 +22,6 @@ export const authenticate = (
     req.user = decoded;
     next();
   } catch (error) {
-    next(new BadRequestError("Invalid or Expired Token"));
+    next(new UnauthorizedError("Invalid or Expired Token")); // ✅ 401
   }
 };

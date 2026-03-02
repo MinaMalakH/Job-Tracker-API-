@@ -1,11 +1,20 @@
 import jwt from "jsonwebtoken";
 import { IUser } from "../models/User";
 
-const ACCESS_TOKEN_SECRET =
-  process.env.JWT_ACCESS_SECRET || "access-secret-change-me";
-const REFRESH_TOKEN_SECRET =
-  process.env.JWT_REFRESH_SECRET || "refresh-secret-change-me";
+const ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET;
 
+if (!ACCESS_TOKEN_SECRET) {
+  throw new Error(
+    "JWT_ACCESS_SECRET must be set in environment variables. Generate: openssl rand -base64 32",
+  );
+}
+
+if (!REFRESH_TOKEN_SECRET) {
+  throw new Error(
+    "JWT_REFRESH_SECRET must be set in environment variables. Generate: openssl rand -base64 32",
+  );
+}
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY = "7d";
 

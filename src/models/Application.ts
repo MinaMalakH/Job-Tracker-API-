@@ -30,6 +30,7 @@ export interface IApplication extends Document {
     generatedAt?: Date;
   };
   followUpDate?: Date;
+  followUpSent?: boolean;
   createdAt: Date;
 }
 
@@ -100,10 +101,16 @@ const applicationSchema = new Schema<IApplication>({
     tailoredResume: String,
     generatedAt: Date,
   },
-  followUpDate: Date,
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  followUpSent: {
+    type: Boolean,
+    default: false,
+  },
+  followUpDate: {
+    type: Date,
   },
 });
 
